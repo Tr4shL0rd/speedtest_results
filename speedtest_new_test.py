@@ -2,6 +2,7 @@
 import time
 import speedtest
 import math
+import bitmath
 
 def convert_size(size_bytes):
    #size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
@@ -10,27 +11,40 @@ def convert_size(size_bytes):
    s = round(size_bytes / p, 2)
    return "%s %s" % (s, "Mbps")
 
-def attempt(attemps:int=0, Try:bool=True, max_attempt_limit=5, totalAttemps=1):
+def attempt(attemps:int=1,sleep_time:int=1, Try:bool=True, max_attempt_limit=5, totalAttemps=1, debug_sleep:int=0):
+    if debug_sleep:
+        sleep_time = debug_sleep
     connected=False
     while not connected:
-        print("Connecting")
+        print(f"Connection attemp {attemps}", end="\r", flush=True)
+        with open("_debug_retry_attempts_amount.txt", "w") as f:
+            f.write(str(attemps))
+            f.close()
         try:
-            st = speedtest.Speedtest()
+            speedtest.Speedtest()
         except speedtest.ConfigRetrievalError:
             connected = False
+            attemps+=1
+            if attemps < max_attempt_limit:
+                sleep_time = max_attempt_limit
+            time.sleep(sleep_time)
+            attempt(attemps)
         connected = True
-        print("CONNECTED")
+        print("\nCONNECTED\n")
         break
-    return st
-    
-st = attempt()
+    return speedtest.Speedtest()
+st = attempt(debug_sleep=0)
 servers = st.get_best_server()
 print("Checking Down Speeds...")
-down = st.download(threads=None)
+down_bit = st.download(threads=None)
+down_kb = bitmath.Bit(down_bit)
 print("Done Checking Down Speeds...")
 print("Checking Up Speeds...")
-up = st.upload(threads=None, pre_allocate=True)
+up_bit = st.upload(threads=None, pre_allocate=True)
+up_kb = bitmath.Bit(up_bit)
 print("Done Checking Up Speeds...")
-print(f"{down = }")
 print()
-print(f"{up = }")
+print(f"{down_bit = }")
+print(f"{down_kb.to_Mb() = }")
+print(f"{up_bit = }")
+print(f"{  up_kb.to_Mb() = }")
