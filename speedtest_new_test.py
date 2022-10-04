@@ -11,15 +11,17 @@ def convert_size(size_bytes):
    s = round(size_bytes / p, 2)
    return "%s %s" % (s, "Mbps")
 
-def attempt(attemps:int=1,sleep_time:int=1, Try:bool=True, max_attempt_limit=5, totalAttemps=1, debug_sleep:int=0):
+def attempt(attemps:int=1,sleep_time:int=1, Try:bool=True, max_attempt_limit=5, totalAttemps=1, debug_sleep:int=0, debug_flag:bool=False):
     if debug_sleep:
+        debug_flag = True
         sleep_time = debug_sleep
     connected=False
     while not connected:
         print(f"Connection attemp {attemps}", end="\r", flush=True)
-        with open("_debug_retry_attempts_amount.txt", "w") as f:
-            f.write(str(attemps))
-            f.close()
+        if debug_flag:
+            with open("_debug_retry_attempts_amount.txt", "w") as f:
+                f.write(str(attemps))
+                f.close()
         try:
             speedtest.Speedtest()
         except speedtest.ConfigRetrievalError:
